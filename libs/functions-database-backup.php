@@ -67,6 +67,9 @@ function wpmove_create_db_backup( $chunk_size = 0, $chunk_id = 1, $old_url = NUL
 
 			while ( isset( $row[$i][$j] ) ) {
 
+				if ( strstr( $row[$i][$j], '_site_transient_' ) || strstr( $row[$i][$j], '_transient_' ) )
+					continue 2;
+
 			 	if ( is_int( $row[$i][$j] ) )
 				 	$query .= "%d, ";
 				else
@@ -194,7 +197,7 @@ function wpmove_replace_url( $find, $replace, $option ){
 		if ( is_array( $option ) )
 			foreach ( $option as $key => $val )
 				$option[$key] = wpmove_replace_url( $find, $replace, $val );
-		else
+		elseif ( ! is_object( $option ) )
 			$option = str_replace( $find, $replace, $option );
 	}
 

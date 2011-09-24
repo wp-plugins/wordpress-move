@@ -2,7 +2,7 @@
 /*
 Plugin Name: WordPress Move
 Plugin URI: http://www.mertyazicioglu.com/wordpress-move/
-Description: WordPress Move is a migration assistant for WordPress that can take care of changing your domain name or moving your database and files to another server. After activating the plugin, please navigate to WordPress Move page under the Settings menu to configure it. Then, you can start using the Migration Assistant under the Tools menu.
+Description: WordPress Move is a migration assistant for WordPress that can take care of changing your domain name and/or moving your database and files to another server. After activating the plugin, please navigate to WordPress Move page under the Settings menu to configure it. Then, you can start using the Migration Assistant under the Tools menu.
 Version: 1.1
 Author: Mert Yazicioglu
 Author URI: http://www.mertyazicioglu.com
@@ -38,7 +38,6 @@ require_once( 'libs/functions-file-backup.php' );
 // Load PemFTP's classes if they're not loaded already
 if ( ! class_exists( 'ftp_base' ) )
 	require_once( ABSPATH . "wp-admin/includes/class-ftp.php" );
-
 if ( ! class_exists( 'ftp' ) )
 	require_once( ABSPATH . "wp-admin/includes/class-ftp-pure.php" );
 
@@ -80,6 +79,7 @@ if ( ! class_exists( 'WPMove' ) ) {
 		 * @return void
 		 */
 		function add_migration_assistant_js() {
+
 			?>
 			<script type="text/javascript"> 
 				jQuery( document ).ready( function( $ ) {
@@ -113,16 +113,54 @@ if ( ! class_exists( 'WPMove' ) ) {
 				} );
 			</script>
 			<?php
+
 		}
 
 		/**
-		 * Loads the JS file for Advanced Migration.
+		 * Loads the JS file for Migration Assistant.
 		 *
 		 * @param void
 		 * @return void
 		 */
-		function load_advanced_migration_scripts() {
+		function load_migration_assistant_scripts() {
 			wp_enqueue_script( 'file_tree', '/wp-content/plugins/wordpress-move/libs/js/jquery.jstree.js', array( 'jquery' ) );
+		}
+
+		/**
+		 * Adds the script to the head of the settings page.
+		 *
+		 * @param void
+		 * @return void
+		 */
+		function add_settings_page_js() {
+			?>
+			<script type="text/javascript"> 
+				jQuery( document ).ready( function( $ ) {
+					jQuery( '.if-js-closed' ).removeClass( 'if-js-closed' ).addClass( 'closed' );
+					postboxes.add_postbox_toggles( 'wpmove-settings' );
+				} );
+			</script>
+			<?php
+		}
+
+		/**
+		 * Loads JS files for the settings page.
+		 *
+		 * @param void
+		 * @return void
+		 */
+		function load_settings_page_scripts() {
+
+			// Load scripts needed for meta boxes
+			wp_enqueue_script( 'common' );
+			wp_enqueue_script( 'wp-lists' );
+			wp_enqueue_script( 'postbox' );
+
+			// Add meta boxes to queue
+			add_meta_box( 'wpmove-ftp-connection-details', __( 'FTP Connection Details', 'WPMove' ), array( $this, 'metabox_ftp_connection_details' ), 'wpmove-settings' );
+			add_meta_box( 'wpmove-db-backup-settings', __( 'Database Backup Settings', 'WPMove' ), array( $this, 'metabox_db_backup_settings' ), 'wpmove-settings' );
+			add_meta_box( 'wpmove-fs-backup-settings', __( 'File Backup Settings', 'WPMove' ), array( $this, 'metabox_fs_backup_settings' ), 'wpmove-settings' );
+
 		}
 
 		/**
@@ -219,110 +257,164 @@ if ( ! class_exists( 'WPMove' ) ) {
 					<?php _e( 'Please configure the plugin using the settings below before starting to use the Migration Assistant under the Tools menu. If connecting to the remote server fails, please toggle the Passive Mode setting and try again.', 'WPMove' ); ?>
 				</p>
 				<form method="post" action="options-general.php?page=wpmove-settings">
-					<?php wp_nonce_field( 'wpmove_update_settings' ); ?>
-					<h3><?php _e( 'FTP Connection Details', 'WPMove' ); ?></h3>
-					<?php _e( 'These are the FTP connection details of your new server.', 'WPMove' ); ?>
-					<table class="form-table">
-						<tbody>
-							<tr valign="top">
-								<th scope="row">
-									<label for="wpmove_ftp_hostname"><?php _e( 'Hostname', 'WPMove' ); ?></label>
-								</th>
-								<td>
-									<input class="regular-text code" id="wpmove_ftp_hostname" name="wpmove_ftp_hostname" type="text" value="<?php echo esc_attr( $wpmove_options['ftp_hostname'] ); ?>" /> <i><?php _e( 'The hostname you use to establish an FTP connection to the remote server. Might be an IP address or a domain name.', 'WPMove' ); ?></i>
-								</td>
-							</tr>
-							<tr valign="top">
-								<th scope="row">
-									<label for="wpmove_ftp_port"><?php _e( 'Port', 'WPMove' ); ?></label>
-								</th>
-								<td>
-									<input id="wpmove_ftp_port" name="wpmove_ftp_port" type="text" value="<?php echo esc_attr( $wpmove_options['ftp_port'] ); ?>" size="5" /> <i><?php _e( 'If you do not know what to write, it is most probably 21.', 'WPMove' ); ?></i>
-								</td>
-							</tr>
-							<tr valign="top">
-								<th scope="row">
-									<label for="wpmove_ftp_username"><?php _e( 'Username', 'WPMove' ); ?></label>
-								</th>
-								<td>
-									<input class="regular-text" id="wpmove_ftp_username" name="wpmove_ftp_username" type="text" value="<?php echo esc_attr( $wpmove_options['ftp_username'] ); ?>" /> <i><?php _e( 'The username you use to establish an FTP connection to the remote server.', 'WPMove' ); ?></i>
-								</td>
-							</tr>
-							<tr valign="top">
-								<th scope="row">
-									<label for="wpmove_ftp_password"><?php _e( 'Password', 'WPMove' ); ?></label>
-								</th>
-								<td>
-									<input class="regular-text" id="wpmove_ftp_password" name="wpmove_ftp_password" type="password" value="<?php echo esc_attr( $wpmove_options['ftp_password'] ); ?>" /> <i><?php _e( 'The password you use to establish an FTP connection to the remote server.', 'WPMove' ); ?></i>
-								</td>
-							</tr>
-							<tr valign="top">
-								<th scope="row">
-									<label for="wpmove_ftp_remote_path"><?php _e( 'Remote Backup Path', 'WPMove' ); ?></label>
-								</th>
-								<td>
-									<input class="regular-text code" id="wpmove_ftp_remote_path" name="wpmove_ftp_remote_path" type="text" value="<?php echo esc_attr( $wpmove_options['ftp_remote_path'] ); ?>" /> <i><?php _e( 'Path from root to the backup directory of the WordPress Move plugin on the remote server. For instance:', 'WPMove' ); ?> <code>/var/www/wp-content/plugins/wordpress-move/backup/</code></i>
-								</td>
-							</tr>
-							<tr valign="top">
-								<th scope="row">
-									<label for="wpmove_ftp_passive_mode"><?php _e( 'Use Passive Mode', 'WPMove' ); ?></label>
-								</th>
-								<td>
-									<label title="enabled">
-										<input type="radio" name="wpmove_ftp_passive_mode" value="1" <?php if ( $wpmove_options['ftp_passive_mode'] ) echo 'checked="checked"'; ?> />
-										<span style="font-size:11px;"><?php _e( 'Yes', 'WPMove' ); ?></span>
-									</label>
-									<br>
-									<label title="disabled">
-										<input type="radio" name="wpmove_ftp_passive_mode" value="0" <?php if ( ! $wpmove_options['ftp_passive_mode'] ) echo 'checked="checked"'; ?> />
-										<span style="font-size:11px;"><?php _e( 'No', 'WPMove' ); ?></span>
-									</label>
-								</td>
-							</tr>
-						</tbody>
-					</table><br>
-					<h3><?php _e( 'Database Backup Settings', 'WPMove' ); ?></h3>
-					<?php _e( 'The size of each chunk of your database backup. Actual sizes of chunks may exceed this size limit. 0 means unlimited.', 'WPMove' ); ?>
-					<table class="form-table">
-						<tbody>
-							<tr valign="top">
-								<th scope="row">
-									<label for="wpmove_db_chunk_size"><?php _e( 'Chunk Size', 'WPMove' ); ?></label>
-								</th>
-								<td>
-									<input id="wpmove_db_chunk_size" name="wpmove_db_chunk_size" type="text" value="<?php echo esc_attr( $wpmove_options['db_chunk_size'] ); ?>" size="5" /> MB
-								</td>
-							</tr>
-						</tbody>
-					</table><br>
-					<h3><?php _e( 'File Backup Settings', 'WPMove' ); ?></h3>
-					<?php _e( 'The size of files to compress per filesystem backup chunk. Sizes of chunks will be less than or equal to this size limit, depending on the compression ratio. 0 means unlimited.', 'WPMove' ); ?>
-					<table class="form-table">
-						<tbody>
-							<tr valign="top">
-								<th scope="row">
-									<label for="wpmove_fs_chunk_size"><?php _e( 'Chunk Size', 'WPMove' ); ?></label>
-								</th>
-								<td>
-									<input id="wpmove_fs_chunk_size" name="wpmove_fs_chunk_size" type="text" value="<?php echo esc_attr( $wpmove_options['fs_chunk_size'] ); ?>" size="5" /> MB
-								</td>
-							</tr>
-						</tbody>
-					</table>
 					<?php
 
-					// Pass the refferer info with a hidden input field
-					if ( isset( $_GET['ref'] ) || isset( $_POST['wpmove_ref'] ) )
-						echo '<input id="wpmove_ref" name="wpmove_ref" type="hidden" />';
+						// To make sure the form is submitted via ACP.
+						wp_nonce_field( 'wpmove_update_settings' );
 
-					// Display the submit button
-					submit_button();
+						// Needed to be able to toggle meta boxes
+						wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
+						wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
+					
+					?>
+					<div id="poststuff" class="metabox-holder">
+						<?php do_meta_boxes( 'wpmove-settings', 'advanced', $wpmove_options ); ?>
+					</div>
+					<?php
+
+						// Pass the refferer info with a hidden input field
+						if ( isset( $_GET['ref'] ) || isset( $_POST['wpmove_ref'] ) )
+							echo '<input id="wpmove_ref" name="wpmove_ref" type="hidden" />';
+
+						// Display the submit button
+						submit_button();
 
 					?>
 				</form>
 			</div>
 			<?php
+		}
+
+		/**
+		 * Callback function for the FTP Connection Details meta box.
+		 *
+		 * @param void
+		 * @return void
+		 */
+		function metabox_ftp_connection_details( $wpmove_options ) {
+
+			?>
+			<p>
+				<?php _e( 'These are the FTP connection details of your new server.', 'WPMove' ); ?>
+			</p>
+			<table class="form-table">
+				<tbody>
+					<tr valign="top">
+						<th scope="row">
+							<label for="wpmove_ftp_hostname"><?php _e( 'Hostname', 'WPMove' ); ?></label>
+						</th>
+						<td>
+							<input class="regular-text code" id="wpmove_ftp_hostname" name="wpmove_ftp_hostname" type="text" value="<?php echo esc_attr( $wpmove_options['ftp_hostname'] ); ?>" /> <i><?php _e( 'The hostname you use to establish an FTP connection to the remote server. Might be an IP address or a domain name.', 'WPMove' ); ?></i>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<label for="wpmove_ftp_port"><?php _e( 'Port', 'WPMove' ); ?></label>
+						</th>
+						<td>
+							<input id="wpmove_ftp_port" name="wpmove_ftp_port" type="text" value="<?php echo esc_attr( $wpmove_options['ftp_port'] ); ?>" size="5" /> <i><?php _e( 'If you do not know what to write, it is most probably 21.', 'WPMove' ); ?></i>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<label for="wpmove_ftp_username"><?php _e( 'Username', 'WPMove' ); ?></label>
+						</th>
+						<td>
+							<input class="regular-text" id="wpmove_ftp_username" name="wpmove_ftp_username" type="text" value="<?php echo esc_attr( $wpmove_options['ftp_username'] ); ?>" /> <i><?php _e( 'The username you use to establish an FTP connection to the remote server.', 'WPMove' ); ?></i>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<label for="wpmove_ftp_password"><?php _e( 'Password', 'WPMove' ); ?></label>
+						</th>
+						<td>
+							<input class="regular-text" id="wpmove_ftp_password" name="wpmove_ftp_password" type="password" value="<?php echo esc_attr( $wpmove_options['ftp_password'] ); ?>" /> <i><?php _e( 'The password you use to establish an FTP connection to the remote server.', 'WPMove' ); ?></i>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<label for="wpmove_ftp_remote_path"><?php _e( 'Remote Backup Path', 'WPMove' ); ?></label>
+						</th>
+						<td>
+							<input class="regular-text code" id="wpmove_ftp_remote_path" name="wpmove_ftp_remote_path" type="text" value="<?php echo esc_attr( $wpmove_options['ftp_remote_path'] ); ?>" /> <i><?php _e( 'Path from root to the backup directory of the WordPress Move plugin on the remote server. For instance:', 'WPMove' ); ?> <code>/var/www/wp-content/plugins/wordpress-move/backup/</code></i>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<label for="wpmove_ftp_passive_mode"><?php _e( 'Use Passive Mode', 'WPMove' ); ?></label>
+						</th>
+						<td>
+							<label title="enabled">
+								<input type="radio" name="wpmove_ftp_passive_mode" value="1" <?php if ( $wpmove_options['ftp_passive_mode'] ) echo 'checked="checked"'; ?> />
+								<span style="font-size:11px;"><?php _e( 'Yes', 'WPMove' ); ?></span>
+							</label>
+							<br>
+							<label title="disabled">
+								<input type="radio" name="wpmove_ftp_passive_mode" value="0" <?php if ( ! $wpmove_options['ftp_passive_mode'] ) echo 'checked="checked"'; ?> />
+								<span style="font-size:11px;"><?php _e( 'No', 'WPMove' ); ?></span>
+							</label>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<?php
+
+		}
+
+		/**
+		 * Callback function for the Database Backup Settings meta box.
+		 *
+		 * @param void
+		 * @return void
+		 */
+		function metabox_db_backup_settings( $wpmove_options ) {
+			
+			?>
+			<p>
+				<?php _e( 'The size of each chunk of your database backup. Actual sizes of chunks may exceed this size limit. 0 means unlimited.', 'WPMove' ); ?>
+			</p>
+			<table class="form-table">
+				<tbody>
+					<tr valign="top">
+						<th scope="row">
+							<label for="wpmove_db_chunk_size"><?php _e( 'Chunk Size', 'WPMove' ); ?></label>
+						</th>
+						<td>
+							<input id="wpmove_db_chunk_size" name="wpmove_db_chunk_size" type="text" value="<?php echo esc_attr( $wpmove_options['db_chunk_size'] ); ?>" size="5" /> MB
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<?php
+
+		}
+
+		/**
+		 * Callback function for the File Backup Settings meta box.
+		 *
+		 * @param void
+		 * @return void
+		 */
+		function metabox_fs_backup_settings( $wpmove_options ) {
+
+			?>
+			<p>
+				<?php _e( 'The size of files to compress per filesystem backup chunk. Sizes of chunks will be less than or equal to this size limit, depending on the compression ratio. 0 means unlimited.', 'WPMove' ); ?>
+			</p>
+			<table class="form-table">
+				<tbody>
+					<tr valign="top">
+						<th scope="row">
+							<label for="wpmove_fs_chunk_size"><?php _e( 'Chunk Size', 'WPMove' ); ?></label>
+						</th>
+						<td>
+							<input id="wpmove_fs_chunk_size" name="wpmove_fs_chunk_size" type="text" value="<?php echo esc_attr( $wpmove_options['fs_chunk_size'] ); ?>" size="5" /> MB
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<?php
+
 		}
 
 		/**
@@ -420,12 +512,14 @@ if ( ! class_exists( 'WPMove' ) ) {
 					if ( TRUE !== wpmove_import_db_backup( $backup ) )
 						$errors_occured++;
 
-				// Delete backup files on success
+				// If everything went well...
 				if ( ! $errors_occured ) {
 
+					// Move the backup files we created "just in case" to the old backup directory
 					foreach ( $db_backups as $backup )
-						wpmove_remove_db_backup( $backup );
+						rename( trailingslashit( WPMOVE_BACKUP_DIR ) . $backup, trailingslashit( WPMOVE_OLD_BACKUP_DIR ) . $backup );
 
+					// Remove the backup files we've just imported as we won't need them anymore
 					foreach ( $new_db_backups as $backup )
 						wpmove_remove_db_backup( $backup );
 
@@ -456,7 +550,6 @@ if ( ! class_exists( 'WPMove' ) ) {
 						</div>
 						<h2><?php _e( 'Failure!', 'WPMove' ); ?></h2>
 						<p>
-
 						<?php
 
 						_e( 'An error occured while changing instances of your domain name.', 'WPMove' );
@@ -476,16 +569,22 @@ if ( ! class_exists( 'WPMove' ) ) {
 							if ( ! wpmove_import_db_backup( $backup ) )
 								$errors_occured++;
 
+						// If rolling back succeeds...
 						if ( ! $errors_occured ) {
+
 							_e( 'Changes on your domain has been rolled back automatically.', 'WPMove' );
+
+							// Move the backup files we created "just in case" to the old backup directory, again, just in case
 							foreach ( $db_backups as $backup )
-								wpmove_remove_db_backup( $backup );
+								rename( trailingslashit( WPMOVE_BACKUP_DIR ) . $backup, trailingslashit( WPMOVE_OLD_BACKUP_DIR ) . $backup );
+
 						} else {
+
 							_e( 'Rolling back to the previous state also failed. Please try importing the database backup stored under the backup folder manually.', 'WPMove' );
+
 						}
 
 						?>
-
 						</p>
 					</div>
 				<?php
@@ -604,7 +703,6 @@ if ( ! class_exists( 'WPMove' ) ) {
 			if ( $_POST && check_admin_referer( 'wpmove_simple_migration_start' ) ) {
 
 			?>
-
 				<div class="wrap">
 					<div id="icon-tools" class="icon32">
 						<br>
@@ -675,14 +773,13 @@ if ( ! class_exists( 'WPMove' ) ) {
 						<?php _e( 'Please check your FTP connection details on the settings page.', 'WPMove' ); ?>
 					</p>
 				</div>
-							<?php
+						<?php
 
 						}
 					}
 	
 			} else {
 			?>
-
 				<div class="wrap">
 					<div id="icon-tools" class="icon32">
 						<br>
@@ -725,7 +822,6 @@ if ( ! class_exists( 'WPMove' ) ) {
 							<input type="button" name="wpmove_toggle_change_domain_name" id="wpmove_toggle_change_domain_name" class="button-secondary" value="<?php _e( 'Change Domain Name', 'WPMove' ); ?>" style="display:none;" />
 					</form>
 				</div>
-
 			<?php
 			}
 		}
@@ -825,7 +921,6 @@ if ( ! class_exists( 'WPMove' ) ) {
 			} else {
 
 				?>
-
 				<div class="wrap">
 					<div id="icon-tools" class="icon32">
 						<br>
@@ -907,7 +1002,6 @@ if ( ! class_exists( 'WPMove' ) ) {
 					</form>
 					<br>
 				</div>
-
 			<?php
 			}
 		}
@@ -1021,7 +1115,7 @@ if ( ! class_exists( 'WPMove' ) ) {
 						$files = wpmove_list_all_files( WPMOVE_BACKUP_DIR, TRUE );
 
 						// Categorize the files listed
-						$backups = $this->categorize_files($files);
+						$backups = $this->categorize_files( $files );
 
 						// Set the error counter to zero
 						$errors_occured = 0;
@@ -1061,11 +1155,11 @@ if ( ! class_exists( 'WPMove' ) ) {
 							printf( _n( 'Migration has been completed but with %d error.', 'Migration has been completed but with %d errors.', $errors_occured, 'WPMove' ), $errors_occured );
 						else
 							_e( 'Migration has been completed successfully!', 'WPMove' );
+
 					?>
 				</div>
 			<?php
-			}
-			else {
+			} else {
 			?>
 				<div class="wrap">
 					<div id="icon-tools" class="icon32">
@@ -1176,6 +1270,7 @@ if ( ! class_exists( 'WPMove' ) ) {
 										// Increase the counter for zebra striping
 										$i++;
 									}
+
 								?>
 							</tbody>
 						</table>
@@ -1213,7 +1308,7 @@ if ( ! class_exists( 'WPMove' ) ) {
 					$move_target = WPMOVE_BACKUP_DIR;
 
 				// If there's an actual array sent
-				if ( is_array( $_POST['files'] ) ) {
+				if ( isset( $_POST['files'] ) && is_array( $_POST['files'] ) ) {
 
 					// Sanitize the POST data
 					$files = array_map( 'sanitize_text_field', $_POST['files'] );
@@ -1225,7 +1320,7 @@ if ( ! class_exists( 'WPMove' ) ) {
 							unlink( $file );
 					else if ( 'toggle' == $action )
 						foreach ( $files as $file )
-							rename( $file, trailingslashit( $move_target ) . basename($file) );
+							rename( $file, trailingslashit( $move_target ) . basename( $file ) );
 				}
 
 			} else if ( isset( $_GET['do'] ) && 'create' == $_GET['do'] ) {
@@ -1566,16 +1661,18 @@ if ( ! class_exists( 'WPMove' ) ) {
 		 	$s = add_options_page( __( 'Settings', 'WPMove' ), __( 'WordPress Move', 'WPMove' ), 'manage_options', 'wpmove-settings', array( &$this, 'print_settings_page' ) );
 
 			// Add styles and scripts for Advanced Migration to the queue
-			add_action( 'admin_print_scripts-' . $ma, array( $this, 'load_advanced_migration_scripts' ) );
+			add_action( 'admin_print_scripts-' . $ma, array( $this, 'load_migration_assistant_scripts' ) );
 			add_action( 'admin_head-' . $ma, array( $this, 'add_migration_assistant_js' ) );
+			add_action( 'admin_head-' . $s, array( $this, 'add_settings_page_js' ) );
+			add_action( 'load-' . $s, array( $this, 'load_settings_page_scripts' ) );
+
 		}
 	}
 }
 
 // Instantiate the WPMove class if it doesn't exist.
-if ( class_exists( 'WPMove' ) ) {
+if ( class_exists( 'WPMove' ) )
 	$wpm = new WPMove();
-}
 
 // If there's an instance of the class available...
 if ( isset( $wpm ) ) {
@@ -1588,5 +1685,6 @@ if ( isset( $wpm ) ) {
 
 	// Hook language file loader to WP init
 	add_action( 'init', array( &$wpm, 'load_language_file' ) );
+
 }
 ?>
