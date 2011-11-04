@@ -3,7 +3,7 @@
  * WP Move Database Backup Functions
  *
  * @author Mert Yazicioglu
- * @date 2011-08-19 00:12:00 +03:00
+ * @date 2011-11-04 02:42:00 +02:00
  */
 
 /**
@@ -113,8 +113,11 @@ function wpmove_import_db_backup( $filename ) {
 
 	$queries = unserialize( $sql );
 
-	foreach ( $queries as $query )
-		$wpdb->query( $query );
+	if ( is_array( $queries ) )
+		foreach ( $queries as $query )
+			$wpdb->query( $query );
+	else
+		return FALSE;
 
 	return TRUE;
 }
@@ -197,7 +200,7 @@ function wpmove_replace_url( $find, $replace, $option ){
 		if ( is_array( $option ) )
 			foreach ( $option as $key => $val )
 				$option[$key] = wpmove_replace_url( $find, $replace, $val );
-		elseif ( ! is_object( $option ) )
+		elseif ( is_string( $option ) )
 			$option = str_replace( $find, $replace, $option );
 	}
 
