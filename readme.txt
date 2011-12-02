@@ -3,7 +3,7 @@ Contributors: merty
 Donate link: http://www.mertyazicioglu.com
 Tags: domain, migrate, migration, move
 Requires at least: 3.2
-Tested up to: 3.2.1
+Tested up to: 3.3
 Stable tag: 1.2
 
 A migration assistant for WordPress capable of changing the domain name in use and/or migrating your installation to another server.
