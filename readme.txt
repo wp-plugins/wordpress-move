@@ -1,12 +1,12 @@
 === WordPress Move ===
 Contributors: merty
 Donate link: http://www.mertyazicioglu.com
-Tags: domain, migrate, migration, move
+Tags: backup, domain, migrate, migration, move, restore
 Requires at least: 3.2
 Tested up to: 3.3.1
 Stable tag: 1.3
 
-A migration assistant for WordPress capable of changing the domain name in use and/or migrating your installation to another server.
+Enables you to back up your installation to restore to at any time, change the domain name in use and migrate your installation to another server.
 
 == Description ==
 
