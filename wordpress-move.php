@@ -1016,7 +1016,6 @@ if ( ! class_exists( 'WPMove' ) ) {
 				echo '<span class="code">';
 
 				printf( __( 'Connecting to %s:%d...', 'WPMove' ), $wpmove_options['ftp_hostname'], $wpmove_options['ftp_port'] );
-				$this->flush_output();
 
 				// Set the hostname and the port
 				$ftp->SetServer( $wpmove_options['ftp_hostname'], intval( $wpmove_options['ftp_port'] ) );
@@ -1025,7 +1024,6 @@ if ( ! class_exists( 'WPMove' ) ) {
 				if ( $ftp->connect() ) {
 
 					echo ' <strong>' . __( 'Success!', 'WPMove' ) . '</strong><br>';
-					$this->flush_output();
 
 					// Display a different message if no password is given
 					if ( '' !== $ftp_password )
@@ -1033,14 +1031,10 @@ if ( ! class_exists( 'WPMove' ) ) {
 					else
 						printf( __( 'Logging in as %s without a password...', 'WPMove' ), $wpmove_options['ftp_username'] );
 
-					$this->flush_output();
-
 					// Login to the server using the supplied credentials
 					if ( $ftp->login( $wpmove_options['ftp_username'], $ftp_password ) ) {
 
 						echo ' <strong>' . __( 'Success!', 'WPMove' ) . '</strong><br>' . __( 'Starting uploading files...', 'WPMove' ) . '<br>';
-
-						$this->flush_output();
 
 						// Changes the present working directory to the backup directory on the remote server
 						$ftp->chdir( $wpmove_options['ftp_remote_path'] );
@@ -1051,14 +1045,13 @@ if ( ! class_exists( 'WPMove' ) ) {
 						// Upload the given backup files under the backup folder to the server
 						foreach ( $files as $file ) {
 							printf( __( '%s is being uploaded...', 'WPMove' ), basename( $file ) );
-							$this->flush_output();
+
 							if ( FALSE !== ( $ftp->put( trailingslashit( WPMOVE_BACKUP_DIR ) . $file, basename( $file ) ) ) ) {
 								echo '<strong>' . __( ' Success!', 'WPMove' ) . '</strong><br>';
 							} else {
 								echo '<strong>' . __( ' Failed!', 'WPMove' ) . '</strong><br>';
 								$error_count++;
 							}
-							$this->flush_output();
 						}
 
 						// Notify the user about the errors occured
@@ -1066,8 +1059,6 @@ if ( ! class_exists( 'WPMove' ) ) {
 							printf( _n( 'Uploading files is completed with %d error...', 'Uploading files is completed with %d errors...', $error_count, 'WPMove' ), $error_count );
 						else
 							_e( 'Uploading files is completed without an error...', 'WPMove' );
-
-						$this->flush_output();
 
 						echo '<br>';
 						_e( 'Closing the FTP connection...', 'WPMove' );
@@ -1127,8 +1118,6 @@ if ( ! class_exists( 'WPMove' ) ) {
 								echo '<span class="code">';
 								printf( __( '%s is being imported... ', 'WPMove' ), basename( $file ) );
 
-								$this->flush_output();
-								
 								if ( wpmove_import_db_backup( basename( $file ) ) ) {
 									echo '<b>' . __( 'Success!', 'WPMove' ) . '</b></span><br>';
 								} else {
@@ -1142,8 +1131,6 @@ if ( ! class_exists( 'WPMove' ) ) {
 
 							 	echo '<span class="code">';
 								printf( __( '%s is being extracted... ', 'WPMove' ), basename( $file ) );
-
-								$this->flush_output();
 
 							 	if ( wpmove_extract_archive( basename( $file ), ABSPATH ) ) {
 									echo '<b>' . __( 'Success!', 'WPMove' ) . '</b></span><br>';
@@ -1800,17 +1787,6 @@ if ( ! class_exists( 'WPMove' ) ) {
 			}
 
 			return $backups;
-		}
-
-		/**
-		 * Flushes the output buffer.
-		 *
-		 * @param void
-		 * @return void
-		 */
-		function flush_output() {
-			wp_ob_end_flush_all();
-			flush();
 		}
 
 		/**

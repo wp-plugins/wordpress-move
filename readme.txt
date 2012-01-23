@@ -63,7 +63,6 @@ You can convert a database backup file using the Convert option in the Backup Ma
 * Meta boxes are added to the migration page.
 * A database backup converter is integrated to convert WordPress-Move-only database backup files to generic SQL files.
 * Backup files to use for restoration can now be selected right on the Restore page.
-* Messages are now displayed in real-time on migration and restoration pages.
 * Empty HTML files are added to backup directories to prevent them being listed by people trying to access the directory via their browsers.
 
 = 1.2 =
