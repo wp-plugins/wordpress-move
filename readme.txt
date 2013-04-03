@@ -57,7 +57,7 @@ As the warning suggests, you need to make the backup directory writable by the p
 
 Visiting the WordPress Move Settings page any time after updating the plugin will remove it from the database permanently.
 
-= Can I use the database backup files that WordPress Move generates with phpMyAdmin?
+= Can I use the database backup files that WordPress Move generates with phpMyAdmin? =
 
 You can convert a database backup file using the Convert option in the Backup Manager to use it outside the plugin. So, yes, you can use the *converted* database backup files with phpMyAdmin or any other script.
 
