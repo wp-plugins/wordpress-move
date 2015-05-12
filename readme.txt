@@ -1,6 +1,6 @@
 === WordPress Move ===
 Contributors: merty
-Donate link: http://www.mertyazicioglu.com
+Donate link: https://www.paypal.com/cgi-bin/webscr?business=mert@mertyazicioglu.com&cmd=_xclick&currency_code=USD&amount=5&item_name=Thanks%20for%20WordPress%20Move%21
 Tags: backup, domain, migrate, migration, move, restore
 Requires at least: 3.2
 Tested up to: 4.1.1
